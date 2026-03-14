@@ -9,6 +9,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.BlendMode.Companion.Screen
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,7 +29,10 @@ import com.zinab.veloura2.ui.Screens.signupScreen.SignUpScreen
 import com.zinab.veloura2.ui.Screens.homeScreen.HomeScreen
 
 import com.zinab.veloura2.ui.Screens.profile.ProfileScreen
+import com.zinab.veloura2.ui.Screens.shoppingBag.CartScreen
 import com.zinab.veloura2.ui.components.ProfileBottomBarUI
+
+
 
 @Composable
 fun MainNavHost() {
@@ -42,7 +47,7 @@ fun MainNavHost() {
             .background(Color(0xFF1B1A16)),
         contentWindowInsets = WindowInsets(0, 0, 0, 0), // 👈 مهم
         bottomBar = {
-            if (route == NavRoutes.Home || route == NavRoutes.Profile) {
+            if (route == NavRoutes.Home || route == NavRoutes.Profile ||  route == NavRoutes.CartScreen){
                 ProfileBottomBarUI(
                     selectedRoute = route ?: NavRoutes.Home,
                     navController = navController
@@ -102,6 +107,14 @@ fun MainNavHost() {
                         launchSingleTop = true
                     }
                 }
+            }
+            composable(NavRoutes.CartScreen) {  // <-- استخدمي NavRoutes مباشرة
+                CartScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onProductClick = { productId ->
+                        navController.navigate("${NavRoutes.Details}/$productId")  // <-- نفس طريقة HomeScreen
+                    }
+                )
             }
 
             composable(NavRoutes.Home) {

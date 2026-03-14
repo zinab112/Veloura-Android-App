@@ -11,7 +11,7 @@ object NavRoutes {
     const val Home = "home"
 
     // Main tabs
-
+    const val CartScreen= "Cart"
     const val Profile = "profile"
     // Details
     const val Details = "details"

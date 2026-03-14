@@ -33,7 +33,7 @@ val bottomItems = listOf(
     BottomItem("Home", Icons.Outlined.Home, NavRoutes.Home),
     BottomItem("Search", Icons.Outlined.Search, ""),
     BottomItem("Wishlist", Icons.Outlined.FavoriteBorder, ""),
-    BottomItem("Cart", Icons.Outlined.ShoppingBag, ""),
+    BottomItem("Cart", Icons.Outlined.ShoppingBag, NavRoutes.CartScreen),
     BottomItem("Profile", Icons.Outlined.Person, NavRoutes.Profile)
 )
 

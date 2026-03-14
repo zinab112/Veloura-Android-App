@@ -20,7 +20,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,12 +27,13 @@ import coil.compose.rememberAsyncImagePainter
 import com.zinab.veloura2.doman.model.ProductDomain
 import com.zinab.veloura2.doman.model.Review
 
-// تعريف ألوان مخصصة لتتناسب مع الخلفية الداكنة
-private val DarkBackground = Color(0xFF1B1A16) // الخلفية المطلوبة
-private val WhiteText = Color.White // للعناوين
-private val LightGrayText = Color.LightGray // للوصف والتفاصيل
-private val GrayText = Color.Gray // للنصوص الثانوية
-private val DividerColor = Color.DarkGray // لون فواصل أفتح قليلاً من الخلفية
+// تعريف ألوان مخصصة
+private val DarkBackground = Color(0xFF1B1A16)
+private val WhiteText = Color.White
+private val LightGrayText = Color.LightGray
+private val GrayText = Color.Gray
+private val DividerColor = Color.DarkGray
+private val GoldColor = Color(0xFFC6A43C)
 
 @Composable
 fun DetailsScreen(
@@ -44,34 +44,59 @@ fun DetailsScreen(
         viewModel.loadProduct(productId)
     }
 
-    val product: ProductDomain? = viewModel.product.value
+    // ✅ قراءة القيم من ViewModel
+    val product by viewModel.product
+    val selectedSize by viewModel.selectedSize
+    val selectedColor by viewModel.selectedColor
+    val quantity by viewModel.quantity
+
     var expandedSection by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
-        containerColor = DarkBackground // تعيين لون الخلفية للشاشة بالكامل
+        containerColor = DarkBackground,
+        bottomBar = {
+            if (product != null) {
+                // ✅ استخدام الـ AddToBagBar البسيط بتاعك
+                AddToBagBar(
+                    onAddToBagClick = viewModel::addToCart
+                )
+            }
+        }
     ) { padding ->
         if (product == null) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = WhiteText) // جعل لون الانتظار أبيض
+                CircularProgressIndicator(color = WhiteText)
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .background(DarkBackground) // تأكيد الخلفية للـ LazyColumn
+                    .background(DarkBackground)
             ) {
-                item { ProductImageSection(product.images) }
-                item { ProductHeaderSection(product) }
-                item { SizeSelectorSection(product.sizes) }
+                item { ProductImageSection(product!!.images) }
+                item {
+                    ProductHeaderSection(
+                        product = product!!,
+                        selectedColor = selectedColor,
+                        onColorSelected = viewModel::selectColor
+                    )
+                }
+                item {
+                    SizeSelectorSection(
+                        sizes = product!!.sizes,
+                        selectedSize = selectedSize,
+                        onSizeSelected = viewModel::selectSize
+                    )
+                }
                 item { ShippingInfoSection() }
                 item {
                     ExpandableInfoSection(
                         title = "Product Description",
-                        content = product.description,
+                        content = product!!.description,
                         isExpanded = expandedSection == "description",
                         onToggle = { expandedSection = if (expandedSection == "description") null else "description" }
                     )
@@ -79,7 +104,7 @@ fun DetailsScreen(
                 item {
                     ExpandableInfoSection(
                         title = "Key Features",
-                        content = product.features.joinToString(separator = "\n") { "• $it" },
+                        content = product!!.features.joinToString(separator = "\n") { "• $it" },
                         isExpanded = expandedSection == "features",
                         onToggle = { expandedSection = if (expandedSection == "features") null else "features" }
                     )
@@ -92,15 +117,174 @@ fun DetailsScreen(
                         onToggle = { expandedSection = if (expandedSection == "styling") null else "styling" }
                     )
                 }
-                item { ReviewsSection(reviews = product.reviews) }
+                item { ReviewsSection(reviews = product!!.reviews) }
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
         }
     }
 }
 
-// ---------------------- Updated Composables ----------------------
+// ---------------------- ProductHeaderSection ----------------------
+@Composable
+fun ProductHeaderSection(
+    product: ProductDomain,
+    selectedColor: String?,
+    onColorSelected: (String) -> Unit
+) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        // Price and Rating Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "$${product.price}",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = WhiteText
+            )
 
+            // Rating
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "4.7",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = LightGrayText
+                )
+                Text(
+                    text = " (19 reviews)",
+                    fontSize = 14.sp,
+                    color = GrayText,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Product Title and Brand
+        Text(
+            text = product.title,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = WhiteText
+        )
+        Text(
+            text = "by Velvosa Atelier",
+            fontSize = 16.sp,
+            color = LightGrayText,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Colors Section
+        if (product.colors.isNotEmpty()) {
+            Text(
+                text = "Color",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = WhiteText
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                product.colors.forEach { color ->
+                    ColorCircle(
+                        color = color,
+                        isSelected = color == selectedColor,
+                        onClick = { onColorSelected(color) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Size Label
+        Text(
+            text = "Size",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            color = WhiteText
+        )
+    }
+}
+
+// ---------------------- ColorCircle ----------------------
+@Composable
+fun ColorCircle(
+    color: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = when (color.lowercase()) {
+        "red" -> Color.Red
+        "blue" -> Color.Blue
+        "black" -> Color.Black
+        "white" -> Color.White
+        "gold" -> GoldColor
+        else -> Color.Gray
+    }
+
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(backgroundColor)
+            .border(
+                width = if (isSelected) 3.dp else 1.dp,
+                color = if (isSelected) GoldColor else Color.Transparent,
+                shape = CircleShape
+            )
+            .clickable { onClick() }
+    )
+}
+
+// ---------------------- SizeSelectorSection ----------------------
+@Composable
+fun SizeSelectorSection(
+    sizes: List<String>,
+    selectedSize: String?,
+    onSizeSelected: (String) -> Unit
+) {
+    val displaySizes = if (sizes.isEmpty()) listOf("XS", "S", "M", "L", "XL") else sizes
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        displaySizes.forEach { size ->
+            val isSelected = size == selectedSize
+
+            OutlinedButton(
+                onClick = { onSizeSelected(size) },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = if (size != displaySizes.last()) 8.dp else 0.dp),
+                shape = RoundedCornerShape(4.dp),
+                border = BorderStroke(
+                    width = if (isSelected) 2.dp else 1.dp,
+                    color = if (isSelected) GoldColor else GrayText
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = if (isSelected) GoldColor else LightGrayText
+                )
+            ) {
+                Text(text = size)
+            }
+        }
+    }
+}
+
+// ---------------------- ProductImageSection ----------------------
 @Composable
 fun ProductImageSection(images: List<String>) {
     if (images.isNotEmpty()) {
@@ -115,112 +299,17 @@ fun ProductImageSection(images: List<String>) {
     }
 }
 
-@Composable
-fun ProductHeaderSection(product: ProductDomain) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        // Price and Rating Row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "$${product.price}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = WhiteText // لون النص الأساسي
-                )
-                Text(
-                    text = " $${product.price}",
-                    fontSize = 18.sp,
-                    color = GrayText, // لون ثانوي للنص المشطوب
-                    textDecoration = TextDecoration.LineThrough,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-
-            // Rating
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "4.7",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = LightGrayText // لون فاتح للوصف
-                )
-                Text(
-                    text = " (19 reviews)",
-                    fontSize = 14.sp,
-                    color = GrayText, // لون ثانوي
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Product Title and Brand
-        Text(
-            text = product.title,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = WhiteText // العنوان الرئيسي
-        )
-        Text(
-            text = "by Velvosa Atelier",
-            fontSize = 16.sp,
-            color = LightGrayText, // لون فاتح للوصف
-            modifier = Modifier.padding(top = 4.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Size Label
-        Text(
-            text = "Size",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-            color = WhiteText // العنوان
-        )
-    }
-}
-
-@Composable
-fun SizeSelectorSection(sizes: List<String>) {
-    val displaySizes = if (sizes.isEmpty()) listOf("XS", "S", "M", "L", "XL") else sizes
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-        displaySizes.take(3).forEach { size ->
-            OutlinedButton(
-                onClick = { /* Handle size selection */ },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp),
-                shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, GrayText)
-
-            ) {
-                Text(text = size)
-            }
-        }
-    }
-}
-
+// ---------------------- ShippingInfoSection ----------------------
 @Composable
 fun ShippingInfoSection() {
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
-        // International Shipping
         Text(
             text = "Shipping to United States",
             fontWeight = FontWeight.Medium,
             fontSize = 16.sp,
-            color = WhiteText // العنوان
+            color = WhiteText
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -228,18 +317,19 @@ fun ShippingInfoSection() {
         Text(
             text = "• Free international shipping over $50",
             fontSize = 14.sp,
-            color = LightGrayText, // الوصف
+            color = LightGrayText,
         )
 
         Text(
             text = "• Estimated shipping time: 5 - 7 business days",
             fontSize = 14.sp,
-            color = LightGrayText, // الوصف
+            color = LightGrayText,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
 
+// ---------------------- ExpandableInfoSection ----------------------
 @Composable
 fun ExpandableInfoSection(
     title: String,
@@ -252,7 +342,7 @@ fun ExpandableInfoSection(
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        Divider(color = DividerColor, thickness = 1.dp) // فاصل بلون داكن
+        Divider(color = DividerColor, thickness = 1.dp)
 
         Row(
             modifier = Modifier
@@ -266,13 +356,13 @@ fun ExpandableInfoSection(
                 text = title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
-                color = WhiteText // العنوان
+                color = WhiteText
             )
 
             Icon(
                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                tint = LightGrayText // لون الأيقونة
+                tint = LightGrayText
             )
         }
 
@@ -280,7 +370,7 @@ fun ExpandableInfoSection(
             Text(
                 text = content,
                 fontSize = 14.sp,
-                color = LightGrayText, // الوصف بالرمادي الفاتح
+                color = LightGrayText,
                 modifier = Modifier.padding(bottom = 16.dp),
                 lineHeight = 20.sp
             )
@@ -288,6 +378,7 @@ fun ExpandableInfoSection(
     }
 }
 
+// ---------------------- ReviewsSection ----------------------
 @Composable
 fun ReviewsSection(reviews: List<Review>) {
     Column(
@@ -295,7 +386,7 @@ fun ReviewsSection(reviews: List<Review>) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        Divider(color = DividerColor, thickness = 1.dp) // فاصل بلون داكن
+        Divider(color = DividerColor, thickness = 1.dp)
 
         // Reviews Header
         Row(
@@ -310,12 +401,12 @@ fun ReviewsSection(reviews: List<Review>) {
                     text = "Reviews",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
-                    color = WhiteText // العنوان
+                    color = WhiteText
                 )
                 Text(
-                    text = " (212)",
+                    text = " (${reviews.size})",
                     fontSize = 14.sp,
-                    color = GrayText, // لون ثانوي
+                    color = GrayText,
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
@@ -325,65 +416,58 @@ fun ReviewsSection(reviews: List<Review>) {
                     text = "4.7",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
-                    color = LightGrayText // الوصف
+                    color = LightGrayText
                 )
                 Text(
                     text = " ★★★★★",
                     fontSize = 16.sp,
-                    color = Color(0xFFFFC107), // لون النجوم يبقى كما هو
+                    color = Color(0xFFFFC107),
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
         }
 
         if (reviews.isEmpty()) {
-            // Show sample review from image
+            // Show sample review
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = DividerColor // لون خلفية البطاقة أفتح قليلاً من الخلفية الرئيسية
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    containerColor = DividerColor
+                )
             ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Column(modifier = Modifier.padding(12.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = "H***1",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = WhiteText // العنوان
+                            color = WhiteText
                         )
                         Text(
                             text = "⭐⭐⭐⭐⭐",
-                            fontSize = 14.sp,
                             color = Color(0xFFFFC107)
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
                     Text(
                         text = "This coat is super warm and comfortable. The gold-plated buttons add a touch of luxury and elegance. I love it!",
-                        fontSize = 14.sp,
-                        color = LightGrayText, // الوصف
-                        lineHeight = 20.sp
+                        color = LightGrayText,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
         } else {
             reviews.forEach { review ->
-                ReviewItem(review = review)
+                ReviewItem(review)
             }
         }
     }
 }
 
+// ---------------------- ReviewItem ----------------------
 @Composable
 fun ReviewItem(review: Review) {
     Card(
@@ -391,37 +475,55 @@ fun ReviewItem(review: Review) {
             .fillMaxWidth()
             .padding(bottom = 16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = DividerColor // لون خلفية البطاقة
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            containerColor = DividerColor
+        )
     ) {
-        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = review.reviewerName,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = WhiteText // العنوان
+                    color = WhiteText
                 )
                 Text(
                     text = "⭐".repeat(review.rating),
-                    fontSize = 14.sp,
                     color = Color(0xFFFFC107)
                 )
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
             Text(
                 text = review.comment,
-                fontSize = 14.sp,
-                color = LightGrayText, // الوصف
-                lineHeight = 20.sp
+                color = LightGrayText,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }
 }
+
+// ---------------------- AddToBagBar (البتاعك البسيط) ----------------------
+@Composable
+fun AddToBagBar(
+    onAddToBagClick: () -> Unit = {}
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Button(
+            onClick = onAddToBagClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFE76F51),
+                contentColor = Color.White
+            )
+        ) {
+            Text(text = "Add to Bag")
+        }
+    }
+}
+
+// ---------------------- Preview ----------------------
