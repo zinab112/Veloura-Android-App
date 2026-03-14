@@ -43,8 +43,14 @@ fun CartScreen(
     onProductClick: (Int) -> Unit = {},
     viewModel: CartViewModel = hiltViewModel()
 ) {
+//    // ✅ أضيفي السطر ده عشان المزامنة
+//    LaunchedEffect(Unit) {
+//        viewModel.syncCart()
+//    }
+
     val cartItems by viewModel.cartItems.collectAsStateWithLifecycle()
     val totalPrice by viewModel.totalPrice.collectAsStateWithLifecycle()
+
 
     Scaffold(
         containerColor = DarkBackground,

@@ -88,26 +88,38 @@ fun MainNavHost() {
 
             composable(NavRoutes.Login) {
                 SignInScreen(
-                    onSignInClick = {
-                        navController.navigate(NavRoutes.Home) {
-                            popUpTo(NavRoutes.SigninSignup) { inclusive = true }
-                            launchSingleTop = true
-                        }
-                    },
-                    onSignUpClick = {
-                        navController.navigate(NavRoutes.SignUp)
-                    }
+                    navController = navController  // تمرير navController
                 )
             }
 
             composable(NavRoutes.SignUp) {
-                SignUpScreen {
-                    navController.navigate(NavRoutes.Home) {
-                        popUpTo(NavRoutes.SigninSignup) { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
+                SignUpScreen(
+                    navController = navController  // تمرير navController
+                )
             }
+
+//            composable(NavRoutes.Login) {
+//                SignInScreen(
+//                    onSignInClick = {
+//                        navController.navigate(NavRoutes.Home) {
+//                            popUpTo(NavRoutes.SigninSignup) { inclusive = true }
+//                            launchSingleTop = true
+//                        }
+//                    },
+//                    onSignUpClick = {
+//                        navController.navigate(NavRoutes.SignUp)
+//                    }
+//                )
+//            }
+//
+//            composable(NavRoutes.SignUp) {
+//                SignUpScreen {
+//                    navController.navigate(NavRoutes.Home) {
+//                        popUpTo(NavRoutes.SigninSignup) { inclusive = true }
+//                        launchSingleTop = true
+//                    }
+//                }
+//            }
             composable(NavRoutes.CartScreen) {  // <-- استخدمي NavRoutes مباشرة
                 CartScreen(
                     onBackClick = { navController.popBackStack() },

@@ -10,7 +10,7 @@ import com.zinab.veloura2.data.local.entity.CartItemEntity
 
 @Database(
     entities = [CartItemEntity::class],
-    version = 1,
+    version = 4,
     exportSchema = false
 )
 abstract class VelouraDatabase : RoomDatabase() {
@@ -27,7 +27,9 @@ abstract class VelouraDatabase : RoomDatabase() {
                     context.applicationContext,
                     VelouraDatabase::class.java,
                     "veloura_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()  // ✅ أضيفي هذا السطر
+                    .build()
                 INSTANCE = instance
                 instance
             }

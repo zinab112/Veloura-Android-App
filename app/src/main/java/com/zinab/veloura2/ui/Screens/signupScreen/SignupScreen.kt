@@ -21,23 +21,55 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.zinab.veloura2.R
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
-
+import com.zinab.veloura2.ui.Screens.auth.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun SignUpScreen(
-    onSignUpClick: () -> Unit
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
-
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var accepted by remember { mutableStateOf(false) }
+
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
+    val isSuccess = viewModel.isSuccess
+
+    // مراقبة نجاح التسجيل والتنقل تلقائياً
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
+            delay(500) // تأخير بسيط لتجربة أفضل
+            navController.navigate("home") {
+                popUpTo("signin_signup") { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
+    // عرض رسالة الخطأ
+    if (errorMessage != null) {
+        LaunchedEffect(errorMessage) {
+            delay(3000)
+            viewModel.clearError()
+        }
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("حسناً")
+                }
+            }
+        ) {
+            Text(errorMessage ?: "")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -46,10 +78,9 @@ fun SignUpScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(120.dp))
 
-        Spacer(modifier = Modifier.height(150.dp))
-
-        // 🔹 Logo
+        // Logo
         Image(
             painter = painterResource(id = R.drawable.logo2),
             contentDescription = "Logo",
@@ -58,7 +89,7 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Title
+        // Title
         Text(
             text = "Create your account",
             fontSize = 28.sp,
@@ -74,9 +105,9 @@ fun SignUpScreen(
             color = Color.White.copy(alpha = 0.7f)
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // 🔹 Full Name
+        // Full Name
         OutlinedTextField(
             value = fullName,
             onValueChange = { fullName = it },
@@ -105,7 +136,7 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Email
+        // Email
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -122,7 +153,8 @@ fun SignUpScreen(
                 unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White
-            ), leadingIcon = {
+            ),
+            leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Email,
                     contentDescription = "Email Icon",
@@ -133,7 +165,7 @@ fun SignUpScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Password
+        // Password
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -151,7 +183,8 @@ fun SignUpScreen(
                 unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White
-            ), leadingIcon = {
+            ),
+            leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "Password Icon",
@@ -159,8 +192,8 @@ fun SignUpScreen(
                 )
             }
         )
-        var accepted by remember { mutableStateOf(false) }
 
+        // Terms & Conditions
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -175,7 +208,7 @@ fun SignUpScreen(
                     uncheckedColor = Color.White.copy(alpha = 0.2f),
                     checkmarkColor = Color.White
                 ),
-                modifier = Modifier.size(16.dp)// 🔹 صغير وأنيق
+                modifier = Modifier.size(16.dp)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -187,28 +220,45 @@ fun SignUpScreen(
             )
         }
 
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 🔹 Sign Up Button
+        // Sign Up Button
         Button(
-            onClick = onSignUpClick,
+            onClick = {
+                if (!accepted) {
+                    viewModel.errorMessage = "Please accept the terms and conditions"  // ✅ مباشر
+                } else if (fullName.isBlank()) {
+                    viewModel.errorMessage = "Please enter your full name"  // ✅ مباشر
+                } else {
+                    viewModel.signUp(email, password)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFE76F51)
-            )
+            ),
+            enabled = !isLoading
         ) {
-            Text(
-                text = "Sign Up",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    text = "Sign Up",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(120.dp))
 
+        Spacer(modifier = Modifier.height(100.dp))
+
+        // Login link
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -228,23 +278,16 @@ fun SignUpScreen(
                 modifier = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onSignUpClick
-                )
+                ) {
+                    navController.popBackStack()
+                }
             )
-
-
         }
     }
 }
-@Preview(
-    showBackground = true,
-    showSystemUi = true
-)
+
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignUpScreenPreview() {
-    SignUpScreen(
-        onSignUpClick = {
-            // preview only
-        }
-    )
+    SignUpScreen(navController = rememberNavController())
 }

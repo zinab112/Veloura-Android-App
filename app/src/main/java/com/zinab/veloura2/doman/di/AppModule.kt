@@ -1,11 +1,13 @@
-package com.zinab.veloura2.domain.di
+package com.zinab.veloura2.doman.di
+ // ✅ غيري من doman إلى domain
 
 import android.content.Context
-import androidx.room.Room
-import com.zinab.veloura2.data.data_source.remote.retrofit.api.VelouraApi
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.zinab.veloura2.data.local.VelouraDatabase
 import com.zinab.veloura2.data.local.dao.CartDao
-import com.zinab.veloura2.domain.repository.CartRepository  // تصحيح الاستيراد
+import com.zinab.veloura2.doman.repository.CartRepository
+import com.zinab.veloura2.data.data_source.remote.retrofit.api.VelouraApi
 import com.zinab.veloura2.doman.repositry.ProductsRepository
 import dagger.Module
 import dagger.Provides
@@ -19,6 +21,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()  // ✅ جديد
 
     @Provides
     @Singleton
@@ -41,11 +51,7 @@ object AppModule {
     fun provideDatabase(
         @ApplicationContext context: Context
     ): VelouraDatabase {
-        return Room.databaseBuilder(
-            context,
-            VelouraDatabase::class.java,
-            "veloura_database"
-        ).build()
+        return VelouraDatabase.getInstance(context)  // ✅ استخدمي الـ singleton
     }
 
     @Provides
@@ -56,8 +62,12 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideCartRepository(cartDao: CartDao): CartRepository {
-        return CartRepository(cartDao)  // استخدام الكلاس الموجود مباشرة
+    fun provideCartRepository(
+        cartDao: CartDao,
+        firestore: FirebaseFirestore,  // ✅ أضيفي
+        auth: FirebaseAuth              // ✅ أضيفي
+    ): CartRepository {
+        return CartRepository(cartDao, firestore, auth)
     }
 
     @Provides

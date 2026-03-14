@@ -1,6 +1,5 @@
 package com.zinab.veloura2.ui.Screens.signinScreen
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,16 +20,56 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.zinab.veloura2.R
+import com.zinab.veloura2.ui.Screens.auth.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun SignInScreen(
-    onSignInClick: () -> Unit,
-    onSignUpClick: () -> Unit
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
+    val isSuccess = viewModel.isSuccess
+
+    // مراقبة نجاح تسجيل الدخول والتنقل تلقائياً
+    LaunchedEffect(isSuccess) {
+        if (isSuccess) {
+            delay(500)
+            navController.navigate("home") {
+                popUpTo("signin_signup") { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
+    // عرض رسالة الخطأ
+    if (errorMessage != null) {
+        LaunchedEffect(errorMessage) {
+            delay(3000)
+            viewModel.clearError()
+        }
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { viewModel.clearError() }) {
+                    Text("حسناً")
+                }
+            }
+        ) {
+            Text(errorMessage ?: "")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -40,9 +78,9 @@ fun SignInScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(170.dp))
+        Spacer(modifier = Modifier.height(150.dp))
 
-        // 🔹 Logo
+        // Logo
         Image(
             painter = painterResource(id = R.drawable.logo2),
             contentDescription = "Logo",
@@ -51,7 +89,7 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Title
+        // Title
         Text(
             text = "Welcome Back!",
             fontSize = 28.sp,
@@ -61,7 +99,7 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 🔹 Subtitle
+        // Subtitle
         Text(
             text = "login to continue your style journey",
             fontSize = 14.sp,
@@ -70,7 +108,7 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 🔹 Email
+        // Email
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -97,7 +135,7 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Password
+        // Password
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -125,7 +163,7 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Remember me
+        // Remember me
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -152,25 +190,35 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 🔹 Sign In Button
+        // Sign In Button
         Button(
-            onClick = onSignInClick,
+            onClick = {
+                viewModel.signIn(email, password)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE76F51))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE76F51)),
+            enabled = !isLoading
         ) {
-            Text(
-                text = "Sign In",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    text = "Sign In",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(150.dp))
+        Spacer(modifier = Modifier.height(130.dp))
 
-        // 🔹 Sign Up hint
+        // Sign Up hint
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -190,20 +238,11 @@ fun SignInScreen(
                 modifier = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onSignUpClick
-                )
+                ) {
+                    navController.navigate("signup")
+                }
             )
         }
     }
 }
-@Preview(
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-fun SignInScreenPreview() {
-    SignInScreen(
-        onSignInClick = { /* تجربة الضغط على Sign In */ },
-        onSignUpClick = { /* تجربة الضغط على Sign Up */ }
-    )
-}
+

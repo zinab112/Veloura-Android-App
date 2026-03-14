@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "81389070830",
+    "project_id": "veloura2",
+    "storage_bucket": "veloura2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81389070830:android:298848e540fcc1208586ff",
+        "android_client_info": {
+          "package_name": "com.zinab.veloura2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqUCzAS48EX5msWD1O_Vg-SiwoYEVFpqM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

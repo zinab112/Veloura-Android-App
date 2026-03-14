@@ -1,9 +1,11 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")  // ✅ تأكد أن هذا في الأعلى
+    id("kotlin-parcelize")
     id("com.google.dagger.hilt.android")
-    id ("kotlin-parcelize")
+    kotlin("kapt")
 }
 
 android {
@@ -24,10 +26,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -43,18 +41,16 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
 
-    // Compose UI + Tooling
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation(libs.play.services.analytics.impl)
-    implementation(libs.androidx.compose.foundation)
-    debugImplementation("androidx.compose.ui:ui-tooling")
-
-    // Material3 + Icons
-    // Compose BOM يحدد كل النسخ
+    // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
 
-    // Material 3 + Icons Extended
+    // Compose UI
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.compose.foundation:foundation")
+
+    // Material 3 + Icons
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
 
@@ -62,12 +58,12 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
 
-    // Navigation Compose
+    // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.47")
-    kapt("com.google.dagger:hilt-android-compiler:2.47")
+    implementation("com.google.dagger:hilt-android:2.52")
+    kapt("com.google.dagger:hilt-android-compiler:2.52")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
     // Retrofit + Coroutines
@@ -76,23 +72,24 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Coil for Compose
+    // Coil for Images
     implementation("io.coil-kt:coil-compose:2.4.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
-    // ==================== ROOM DATABASE ====================
+    // Room Database
     val roomVersion = "2.6.1"
-
-    // Room runtime
     implementation("androidx.room:room-runtime:$roomVersion")
-
-    // Room Kotlin Extensions (Coroutines support)
     implementation("androidx.room:room-ktx:$roomVersion")
-
-    // Room Compiler (kapt)
     kapt("androidx.room:room-compiler:$roomVersion")
-
-    // Optional - Test helpers
     testImplementation("androidx.room:room-testing:$roomVersion")
-    // =======================================================
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")// ✅ أضف هذا
+
+    // Testing
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }

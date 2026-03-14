@@ -10,6 +10,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
@@ -49,6 +53,8 @@ fun DetailsScreen(
     val selectedSize by viewModel.selectedSize
     val selectedColor by viewModel.selectedColor
     val quantity by viewModel.quantity
+    val isLoved by viewModel.isLoved
+    val isSaved by viewModel.isSaved
 
     var expandedSection by remember { mutableStateOf<String?>(null) }
 
@@ -56,7 +62,6 @@ fun DetailsScreen(
         containerColor = DarkBackground,
         bottomBar = {
             if (product != null) {
-                // ✅ استخدام الـ AddToBagBar البسيط بتاعك
                 AddToBagBar(
                     onAddToBagClick = viewModel::addToCart
                 )
@@ -85,6 +90,17 @@ fun DetailsScreen(
                         onColorSelected = viewModel::selectColor
                     )
                 }
+
+                // Love & Save Section
+                item {
+                    LoveAndSaveSection(
+                        isLoved = isLoved,
+                        isSaved = isSaved,
+                        onLoveClick = viewModel::toggleLove,
+                        onSaveClick = viewModel::toggleSave
+                    )
+                }
+
                 item {
                     SizeSelectorSection(
                         sizes = product!!.sizes,
@@ -502,7 +518,88 @@ fun ReviewItem(review: Review) {
     }
 }
 
-// ---------------------- AddToBagBar (البتاعك البسيط) ----------------------
+// ---------------------- LoveAndSaveSection ----------------------
+@Composable
+fun LoveAndSaveSection(
+    isLoved: Boolean,
+    isSaved: Boolean,
+    onLoveClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = DividerColor.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Love Button
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onLoveClick() }
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isLoved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Love",
+                    tint = if (isLoved) Color.Red else LightGrayText,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isLoved) "Loved" else "Love",
+                    color = if (isLoved) Color.Red else LightGrayText,
+                    fontSize = 14.sp
+                )
+            }
+
+            // Divider
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(24.dp)
+                    .background(GrayText)
+            )
+
+            // Save Button
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onSaveClick() }
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                    contentDescription = "Save",
+                    tint = if (isSaved) GoldColor else LightGrayText,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (isSaved) "Saved" else "Save",
+                    color = if (isSaved) GoldColor else LightGrayText,
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+// ---------------------- AddToBagBar ----------------------
 @Composable
 fun AddToBagBar(
     onAddToBagClick: () -> Unit = {}
@@ -525,5 +622,3 @@ fun AddToBagBar(
         }
     }
 }
-
-// ---------------------- Preview ----------------------
