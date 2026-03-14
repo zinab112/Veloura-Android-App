@@ -82,11 +82,11 @@ class DetailsViewModel @Inject constructor(
                 // إضافة المنتج إلى السلة
                 cartRepository.addToCart(cartItem)
 
-                println("Product ${currentProduct.title} added to cart successfully!")
+
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                println("Error adding product to cart: ${e.message}")
+
             }
         }
     }
